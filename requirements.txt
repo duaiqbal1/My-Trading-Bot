@@ -1,6 +1,7 @@
-flask
-MetaTrader5
-yfinance
-scikit-learn
-pandas
-numpy
+flask==2.0.1
+gunicorn==20.1.0
+MetaTrader5==5.0.45
+pandas==1.5.3
+yfinance==0.2.40
+scikit-learn==1.2.2
+numpy==1.24.3
