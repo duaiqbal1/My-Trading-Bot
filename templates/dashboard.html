@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Bot Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js Zoom Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts for Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        body.light-theme {
+            background: linear-gradient(135deg, #e6f0fa 0%, #f7f9fc 100%);
+            color: #333;
+        }
+        body.dark-theme {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+        }
+        .header {
+            background: linear-gradient(90deg, #007bff, #00c6ff);
+            padding: 15px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+        }
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .theme-toggle:hover {
+            transform: rotate(20deg);
+        }
+        .container {
+            margin-top: 40px;
+            padding-bottom: 40px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            background: linear-gradient(90deg, #007bff, #00c6ff);
+            color: white;
+            font-weight: 700;
+            border-radius: 15px 15px 0 0;
+            padding: 15px;
+            font-size: 1.2rem;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #28a745, #34d058);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            transition: background 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #218838, #2ea44f);
+        }
+        .btn-danger {
+            background: linear-gradient(90deg, #dc3545, #ff4d4d);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            transition: background 0.3s ease;
+        }
+        .btn-danger:hover {
+            background: linear-gradient(90deg, #c82333, #e63946);
+        }
+        .table {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            overflow: hidden;
+            color: #333;
+        }
+        .table th {
+            background: linear-gradient(90deg, #007bff, #00c6ff);
+            color: white;
+        }
+        .metric-box {
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            text-align: center;
+            font-size: 1.1rem;
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+        .metric-box:hover {
+            transform: scale(1.05);
+        }
+        .balance-box { background: linear-gradient(90deg, #28a745, #34d058); }
+        .trades-box { background: linear-gradient(90deg, #007bff, #00c6ff); }
+        .signal-box { background: linear-gradient(90deg, #ffc107, #ffca2c); color: black; }
+        .profit-box { background: linear-gradient(90deg, #dc3545, #ff4d4d); }
+        .market-data-box {
+            background: linear-gradient(90deg, #6f42c1, #8a5ed6);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            text-align: center;
+            font-size: 1.1rem;
+            transition: transform 0.3s ease;
+        }
+        .market-data-box:hover {
+            transform: scale(1.05);
+        }
+        .status-box {
+            background: linear-gradient(90deg, #17a2b8, #20c997);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            text-align: center;
+            font-size: 1.1rem;
+            transition: transform 0.3s ease;
+        }
+        .status-box:hover {
+            transform: scale(1.05);
+        }
+        #profitChart, #balanceChart {
+            max-height: 350px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 10px;
+        }
+        .dashboard-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+        }
+        .icon {
+            margin-right: 8px;
+        }
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            display: none;
+            z-index: 1000;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .metric-box:hover .tooltip {
+            display: block;
+        }
+        .footer {
+            background: linear-gradient(90deg, #007bff, #00c6ff);
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <!-- Header -->
+    <div class="header">
+        <div class="container d-flex justify-content-between align-items-center">
+            <h1><i class="fas fa-robot icon"></i>Trading Bot Dashboard</h1>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <i class="fas fa-sun"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Metrics Section -->
+        <div class="row">
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="metric-box balance-box">
+                    <i class="fas fa-wallet icon"></i>Account Balance: {{ balance|round(2) }}
+                    <span class="tooltip">Current account balance in USD</span>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="metric-box trades-box">
+                    <i class="fas fa-exchange-alt icon"></i>Open Trades: {{ open_trades }}
+                    <span class="tooltip">Number of currently open trades</span>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="metric-box signal-box">
+                    <i class="fas fa-signal icon"></i>Latest Signal: {{ latest_signal }}
+                    <span class="tooltip">Most recent trading signal</span>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="metric-box profit-box">
+                    <i class="fas fa-chart-line icon"></i>Total Profit: {{ total_profit|round(2) }}
+                    <span class="tooltip">Cumulative profit from all trades</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Data and Status Section -->
+        <div class="row">
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="market-data-box">
+                    <i class="fas fa-chart-bar icon"></i>Current EURUSD Price: <span id="eurusdPrice">Loading...</span>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="market-data-box">
+                    <i class="fas fa-arrow-up icon"></i>Daily High: <span id="eurusdHigh">Loading...</span>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="market-data-box">
+                    <i class="fas fa-arrow-down icon"></i>Daily Low: <span id="eurusdLow">Loading...</span>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="status-box">
+                    <i class="fas fa-circle-notch icon" id="statusIcon"></i>Bot Status: <span id="botStatus">Checking...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bot Control Section -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-robot icon"></i>Bot Control
+            </div>
+            <div class="card-body text-center">
+                <form method="POST" action="/start_bot" style="display:inline;">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-play icon"></i>Start Bot</button>
+                </form>
+                <form method="POST" action="/stop_bot" style="display:inline;">
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-stop icon"></i>Stop Bot</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-area icon"></i>Profit Over Time
+                    </div>
+                    <div class="card-body">
+                        <canvas id="profitChart" data-trade-times='{{ trade_times|tojson }}' data-trade-profits='{{ trade_profits|tojson }}'></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line icon"></i>Balance Over Time
+                    </div>
+                    <div class="card-body">
+                        <canvas id="balanceChart" data-trade-times='{{ trade_times|tojson }}' data-balance-values='{{ balance_values|tojson }}'></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historical Trades Section -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-history icon"></i>Historical Trades
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Type</th>
+                            <th>Volume</th>
+                            <th>Profit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trade in trades %}
+                        <tr>
+                            <td>{{ trade.time }}</td>
+                            <td>{{ trade.type }}</td>
+                            <td>{{ trade.volume|round(2) }}</td>
+                            <td>{{ trade.profit|round(2) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Trading Bot v1.0 | Last Updated: <span id="lastUpdated"></span></p>
+    </div>
+
+    <!-- JavaScript for Charts, Market Data, Theme Toggle, and Status -->
+    <script type="text/javascript">
+        // Theme Toggle
+        function toggleTheme() {
+            const body = document.body;
+            if (body.classList.contains('light-theme')) {
+                body.classList.remove('light-theme');
+                body.classList.add('dark-theme');
+                document.querySelector('.theme-toggle i').classList.remove('fa-moon');
+                document.querySelector('.theme-toggle i').classList.add('fa-sun');
+            } else {
+                body.classList.remove('dark-theme');
+                body.classList.add('light-theme');
+                document.querySelector('.theme-toggle i').classList.remove('fa-sun');
+                document.querySelector('.theme-toggle i').classList.add('fa-moon');
+            }
+        }
+
+        // Profit Chart
+        const profitChart = document.getElementById('profitChart');
+        const tradeTimes = JSON.parse(profitChart.getAttribute('data-trade-times'));
+        const tradeProfits = JSON.parse(profitChart.getAttribute('data-trade-profits'));
+
+        const ctxProfit = profitChart.getContext('2d');
+        new Chart(ctxProfit, {
+            type: 'line',
+            data: {
+                labels: tradeTimes,
+                datasets: [{
+                    label: 'Profit Over Time',
+                    data: tradeProfits,
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.3)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time',
+                            color: '#333'
+                        },
+                        ticks: { color: '#333' }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Profit (USD)',
+                            color: '#333'
+                        },
+                        ticks: { color: '#333' },
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: '#333' }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: { family: 'Montserrat' },
+                        bodyFont: { family: 'Montserrat' }
+                    },
+                    zoom: {
+                        zoom: {
+                            wheel: {
+                                enabled: true,
+                            },
+                            pinch: {
+                                enabled: true
+                            },
+                            mode: 'xy',
+                        },
+                        pan: {
+                            enabled: true,
+                            mode: 'xy',
+                        }
+                    }
+                }
+            }
+        });
+
+        // Balance Chart
+        const balanceChart = document.getElementById('balanceChart');
+        const balanceTimes = JSON.parse(balanceChart.getAttribute('data-trade-times'));
+        const balanceValues = JSON.parse(balanceChart.getAttribute('data-balance-values'));
+
+        const ctxBalance = balanceChart.getContext('2d');
+        new Chart(ctxBalance, {
+            type: 'line',
+            data: {
+                labels: balanceTimes,
+                datasets: [{
+                    label: 'Balance Over Time',
+                    data: balanceValues,
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.3)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time',
+                            color: '#333'
+                        },
+                        ticks: { color: '#333' }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Balance (USD)',
+                            color: '#333'
+                        },
+                        ticks: { color: '#333' },
+                        beginAtZero: false
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: '#333' }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: { family: 'Montserrat' },
+                        bodyFont: { family: 'Montserrat' }
+                    },
+                    zoom: {
+                        zoom: {
+                            wheel: {
+                                enabled: true,
+                            },
+                            pinch: {
+                                enabled: true
+                            },
+                            mode: 'xy',
+                        },
+                        pan: {
+                            enabled: true,
+                            mode: 'xy',
+                        }
+                    }
+                }
+            }
+        });
+
+        // Fetch real-time EURUSD data (simulated for local environment)
+        async function fetchEURUSDData() {
+            try {
+                // Simulated data
+                const price = (Math.random() * (1.15 - 1.05) + 1.05).toFixed(4);
+                const high = (parseFloat(price) + Math.random() * 0.02).toFixed(4);
+                const low = (parseFloat(price) - Math.random() * 0.02).toFixed(4);
+                document.getElementById('eurusdPrice').textContent = price;
+                document.getElementById('eurusdHigh').textContent = high;
+                document.getElementById('eurusdLow').textContent = low;
+            } catch (error) {
+                document.getElementById('eurusdPrice').textContent = 'Error';
+                document.getElementById('eurusdHigh').textContent = 'Error';
+                document.getElementById('eurusdLow').textContent = 'Error';
+            }
+        }
+
+        // Check bot status
+        async function checkBotStatus() {
+            try {
+                const response = await fetch('/start_bot', { method: 'POST' });
+                const text = await response.text();
+                const statusElement = document.getElementById('botStatus');
+                const statusIcon = document.getElementById('statusIcon');
+                if (text.includes("Bot is already running")) {
+                    statusElement.textContent = 'Running';
+                    statusIcon.classList.add('fa-spin');
+                } else {
+                    statusElement.textContent = 'Stopped';
+                    statusIcon.classList.remove('fa-spin');
+                }
+            } catch (error) {
+                document.getElementById('botStatus').textContent = 'Error';
+            }
+        }
+
+        // Update last updated timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('lastUpdated').textContent = now.toLocaleString();
+        }
+
+        // Fetch data on load and every 10 seconds
+        fetchEURUSDData();
+        setInterval(fetchEURUSDData, 10000);
+
+        // Check bot status on load and every 10 seconds
+        checkBotStatus();
+        setInterval(checkBotStatus, 10000);
+
+        // Update timestamp on load and every 10 seconds
+        updateTimestamp();
+        setInterval(updateTimestamp, 10000);
+
+        // Auto-refresh the dashboard every 30 seconds
+        setTimeout(function() {
+            window.location.reload();
+        }, 30000);
+    </script>
+
+    <!-- Bootstrap JS and Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+</body>
+</html>
